@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LA NOSTRA MAPPA — A + L</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f3eadb;--paper:#faf7f0;--ink:#4d443b;--muted:#8b7d6c;--line:#d9cbb8;--accent:#75604e;--soft:#e8dccb;--shadow:0 20px 55px rgba(72,57,42,.18)}
+*{box-sizing:border-box}html,body,#map{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:Manrope,sans-serif;color:var(--ink)}
+#splash{position:fixed;inset:0;background:var(--cream);z-index:5000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 1s,visibility 1s}.hide{opacity:0!important;visibility:hidden!important}
+.brand{font-family:"Cormorant Garamond";font-size:clamp(42px,7vw,86px);letter-spacing:.12em}.initials{font-family:"Cormorant Garamond";font-size:clamp(22px,3vw,34px);letter-spacing:.28em}.rule{width:48px;height:1px;background:#9b8064;margin:26px 0}.subtle{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+#map{position:absolute;background:#e9dfcf}.leaflet-tile{filter:sepia(.38) saturate(.55) brightness(1.08) contrast(.88)}
+.leaflet-control-zoom{border:0!important;box-shadow:0 8px 25px rgba(72,57,42,.12)!important}.leaflet-control-zoom a{background:rgba(250,247,240,.94)!important;color:var(--ink)!important;border:0!important}
+.topbar{position:absolute;z-index:1000;top:22px;left:26px;right:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}.left-stack{display:flex;flex-direction:column;gap:7px}
+.mini-brand,.statsbox,.btn,.search{background:rgba(250,247,240,.91);backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(72,57,42,.1);border-radius:15px}
+.mini-brand{padding:13px 17px;pointer-events:auto}.mini-brand b{font-family:"Cormorant Garamond";font-size:23px;letter-spacing:.12em}.mini-brand span{display:block;font-size:10px;letter-spacing:.22em;color:var(--muted)}
+.statsbox{padding:9px 13px;display:flex;gap:17px;font-size:9px;letter-spacing:.15em;color:var(--muted)}.statsbox strong{display:block;color:var(--ink);font-size:12px;letter-spacing:.06em;margin-top:2px}
+.right-tools{display:flex;gap:8px;align-items:center;pointer-events:auto;flex-wrap:wrap;justify-content:flex-end}.btn{color:var(--ink);padding:11px 14px;font-size:11px}.btn.primary{background:var(--accent);color:#fffaf2}.search{display:flex;align-items:center;padding:0 11px}.search input{width:155px;border:0;outline:0;background:transparent;padding:11px 5px;color:var(--ink);font:11px Manrope}.search button{background:none;border:0;color:var(--muted);font-size:16px}
+.marker{width:18px;height:18px;border-radius:50%;background:#75604e;border:4px solid rgba(255,253,249,.95);box-shadow:0 4px 12px rgba(72,57,42,.35)}.marker.plan{background:rgba(117,96,78,.22);border:2px solid rgba(117,96,78,.62);box-shadow:0 3px 10px rgba(72,57,42,.16)}.fav{position:absolute;right:-7px;top:-12px;font-size:12px;text-shadow:0 1px 3px #fff}
+.sidepanel{position:absolute;z-index:1200;right:26px;top:50%;transform:translateY(-50%) translateX(25px);width:min(440px,calc(100vw - 40px));max-height:calc(100vh - 90px);background:rgba(250,247,240,.97);border-radius:24px;box-shadow:var(--shadow);opacity:0;visibility:hidden;transition:.35s;overflow:auto}.sidepanel.open{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0)}
+.close{position:absolute;right:13px;top:13px;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,253,249,.88);color:var(--ink);font-size:22px;z-index:3}.photo-wrap{position:relative;aspect-ratio:4/3;background:#e4d8c7;overflow:hidden}.photo-wrap img{width:100%;height:100%;object-fit:cover;display:block}.photo-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}.arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;border-radius:50%;background:rgba(250,247,240,.9);color:var(--ink);font-size:20px}.left{left:14px}.right{right:14px}.counter{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(77,68,59,.7);color:#fff;font-size:10px;padding:5px 9px;border-radius:20px}.expand{position:absolute;right:12px;bottom:12px;border:0;border-radius:10px;background:rgba(250,247,240,.9);color:var(--ink);padding:7px 9px;font-size:10px}
+.content{padding:22px 25px 25px}.date{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}.title{font-family:"Cormorant Garamond";font-size:34px;line-height:1.05;margin:0 0 12px;font-weight:500}.caption{font-size:13px;line-height:1.7;color:#665b4e;white-space:pre-wrap}.meta{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}.tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:6px 9px;border-radius:20px;background:var(--soft);color:#75604e}.edit-actions{display:flex;gap:8px;margin-top:20px;padding-top:17px;border-top:1px solid var(--line);flex-wrap:wrap}.edit-actions .btn{box-shadow:none;background:var(--soft)}.danger{color:#8d5147!important}
+.notes{position:absolute;z-index:1100;left:26px;top:50%;transform:translateY(-50%) translateX(-25px);width:min(340px,calc(100vw - 40px));max-height:62vh;background:#f5eedf;border-radius:5px 16px 16px 16px;box-shadow:var(--shadow);opacity:0;visibility:hidden;transition:.35s;overflow:auto}.notes.open{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0)}.notes:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:#bca88f}.notes-head{padding:18px 20px 10px 25px;border-bottom:1px solid #ddcfbb;display:flex;justify-content:space-between}.notes-head b{font-family:"Cormorant Garamond";font-size:25px;font-weight:500}.notes-list{padding:14px 20px 10px 25px}.note{border-bottom:1px dashed #d4c4ae;padding:0 0 12px;margin-bottom:12px;font-size:12px;line-height:1.6}.note small{display:block;color:var(--muted);font-size:9px;letter-spacing:.08em;margin-top:5px}.note-form{padding:0 20px 18px 25px}.note-form textarea{width:100%;min-height:75px;resize:none;border:1px solid #d8c9b5;border-radius:10px;background:#faf6ec;padding:9px;font:12px Manrope;color:var(--ink);outline:0}.note-form .btn{margin-top:7px;box-shadow:none;background:var(--soft)}
+.timeline{position:absolute;z-index:1000;left:50%;bottom:18px;transform:translateX(-50%);width:min(760px,calc(100vw - 36px));background:rgba(250,247,240,.91);backdrop-filter:blur(12px);border-radius:18px;box-shadow:0 8px 30px rgba(72,57,42,.12);padding:12px 20px}.timeline-head{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.12em;color:var(--muted);margin-bottom:7px}.timeline-head button{font-size:10px;background:none;border:0;color:var(--accent)}.track{height:28px;position:relative}.trackline{position:absolute;left:3%;right:3%;top:9px;height:2px;background:repeating-linear-gradient(90deg,#bca88f 0 2px,transparent 2px 7px);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}.ticks{position:absolute;left:3%;right:3%;top:2px;display:flex;justify-content:space-between;font-size:8px;color:var(--muted)}.range{position:absolute;left:3%;right:3%;top:4px}.range input{position:absolute;width:100%;pointer-events:none;appearance:none;background:none}.range input::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:#75604e;border:3px solid #faf7f0;box-shadow:0 2px 7px rgba(72,57,42,.35);cursor:pointer;pointer-events:auto}.range input::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#75604e;border:3px solid #faf7f0;cursor:pointer;pointer-events:auto}
+.toggle{display:flex;align-items:center;gap:7px}.switch{width:31px;height:17px;border-radius:20px;background:#d4c6b2;position:relative;cursor:pointer}.switch:after{content:"";width:13px;height:13px;border-radius:50%;background:#faf7f0;position:absolute;top:2px;left:2px;transition:.2s}.switch.on{background:#75604e}.switch.on:after{left:16px}
+.editor{position:absolute;z-index:1500;inset:0;background:rgba(72,57,42,.2);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px}.editor.open{display:flex}.form{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--paper);border-radius:24px;box-shadow:var(--shadow);padding:28px}.form h2{font-family:"Cormorant Garamond";font-size:36px;font-weight:500;margin:0 0 20px}label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:13px 0 7px}input,textarea,select{width:100%;border:1px solid var(--line);border-radius:12px;background:#fffdf9;color:var(--ink);font:inherit;padding:11px 12px;outline:0}.form textarea{min-height:100px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5}.photos-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.thumb{position:relative;width:78px;height:58px;border-radius:8px;overflow:hidden;background:#e4d8c7}.thumb img{width:100%;height:100%;object-fit:cover}.thumb button{position:absolute;right:3px;top:3px;width:20px;height:20px;border:0;border-radius:50%;background:rgba(77,68,59,.78);color:#fff}.emoji-list{display:flex;gap:6px;flex-wrap:wrap}.emoji-option{width:34px;height:34px;border:0;border-radius:10px;background:var(--soft);font-size:16px}.emoji-option.selected{outline:2px solid #75604e}.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.lightbox{position:absolute;z-index:2500;inset:0;background:rgba(44,36,30,.72);display:none;align-items:center;justify-content:center;padding:5vh 5vw}.lightbox.open{display:flex}.lightbox img{max-width:88vw;max-height:88vh;object-fit:contain;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.28)}.lightbox .close{right:4vw;top:4vh}
+.route-panel{position:absolute;z-index:1300;right:28px;bottom:100px;background:rgba(250,247,240,.95);border-radius:14px;box-shadow:0 8px 30px rgba(72,57,42,.12);padding:10px 13px;display:none}.route-panel.open{display:block}.route-panel b{font-family:"Cormorant Garamond";font-size:22px;font-weight:500;display:block}.route-panel span{font-size:10px;color:var(--muted)}
+.pop{position:absolute;z-index:1700;right:26px;top:85px;width:320px;background:rgba(250,247,240,.97);border-radius:20px;box-shadow:var(--shadow);padding:20px;display:none}.pop.open{display:block}.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:var(--soft);border-radius:12px;padding:12px}.stat strong{font-family:"Cormorant Garamond";font-size:28px;font-weight:500;display:block}.stat span{font-size:9px;color:var(--muted);letter-spacing:.08em}
+@media(max-width:700px){.auth-user{display:none}.topbar{top:10px;left:10px;right:10px}.mini-brand{padding:10px 12px}.mini-brand b{font-size:18px}.statsbox{display:none}.right-tools{gap:5px}.right-tools .btn{padding:9px}.search input{width:95px}.sidepanel{right:10px;left:10px;width:auto;top:auto;bottom:10px;transform:translateY(20px);max-height:73vh}.sidepanel.open{transform:translateY(0)}.notes{left:10px;right:10px;width:auto;top:auto;bottom:10px;transform:translateY(20px);max-height:45vh}.notes.open{transform:translateY(0)}.timeline{bottom:8px;padding:9px 12px}.row{grid-template-columns:1fr}.pop{right:10px;top:70px;width:calc(100vw - 20px)}}
+
+.auth-user{font-size:10px;letter-spacing:.08em;color:var(--muted);padding:0 8px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-line{stroke:#75604e;stroke-width:3;stroke-dasharray:8 8;stroke-linecap:round;opacity:.85}
+.plan-card{position:absolute;z-index:1200;right:26px;top:50%;transform:translateY(-50%) translateX(25px);width:min(320px,calc(100vw - 40px));background:rgba(250,247,240,.98);border-radius:18px;box-shadow:var(--shadow);opacity:0;visibility:hidden;transition:.35s;padding:25px}
+.plan-card.open{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0)}
+.plan-card h2{font-family:"Cormorant Garamond";font-size:34px;font-weight:500;margin:0 0 7px}
+.plan-card .year{font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.plan-card .comment{margin-top:16px;font-size:12px;line-height:1.65;white-space:pre-wrap}
+.plan-card .edit-actions{margin-top:18px}
+
+#passwordModal{position:fixed;inset:0;z-index:6000;background:rgba(65,52,40,.18);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px}
+#passwordModal.open{display:flex}
+#passwordModal .modal-card{position:relative;background:var(--paper);border-radius:20px;box-shadow:var(--shadow);padding:28px;width:100%}
+#passwordModal input{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#fffaf2;color:var(--ink);font:inherit;outline:none}
+</style>
+</head>
+<body>
+<div id="splash"><div class="brand">LA NOSTRA MAPPA</div><div class="initials">A + L</div><div class="rule"></div><div class="subtle">il nostro viaggio</div></div>
+<div id="map"></div>
+<div class="topbar">
+<div class="left-stack"><div class="mini-brand"><b>LA NOSTRA MAPPA</b><span>A + L</span></div><div class="statsbox"><div><strong id="countTop">0</strong> MEMORIES</div><div><strong id="daysTop">0</strong> DAYS TOGETHER</div></div></div>
+<div class="right-tools"><div class="search"><input id="search" name="map-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Поиск..."><button id="clearSearch">×</button></div><button class="btn" id="statsBtn">Статистика</button><button class="btn" id="backupBtn">Архив</button><button class="btn" id="authBtn">Войти</button><button class="btn primary" id="addBtn">＋ Добавить</button></div>
+</div>
+<div id="sidepanel" class="sidepanel"><button class="close" id="closePanel">×</button><div class="photo-wrap" id="photoWrap"></div><div class="content"><div class="date" id="viewDate"></div><h2 class="title" id="viewTitle"></h2><div class="meta" id="viewMeta"></div><div class="caption" id="viewCaption"></div><div class="edit-actions"><button class="btn" id="notesBtn">📝 Заметки</button><button class="btn" id="routeBtn" style="display:none">Показать путь</button><button class="btn" id="editBtn">Изменить</button><button class="btn danger" id="deleteBtn">Удалить</button></div></div></div>
+<div id="notes" class="notes"><div class="notes-head"><b>NOTES</b><button class="close" id="closeNotes">×</button></div><div class="notes-list" id="notesList"></div><div class="note-form"><textarea id="noteText" placeholder="Напиши что-нибудь об этом воспоминании..."></textarea><button class="btn" id="addNote">＋ Добавить заметку</button></div></div>
+<div class="timeline"><div class="timeline-head"><span>ВРЕМЯ</span><div class="toggle"><span>Фильтр</span><div class="switch" id="timeSwitch"></div><button id="resetTime">Сбросить</button></div></div><div class="track"><div class="trackline"></div><div class="ticks" id="ticks"></div><div class="range"><input id="rangeMin" type="range" min="0" max="100" value="0"><input id="rangeMax" type="range" min="0" max="100" value="100"></div></div></div>
+<div id="planCard" class="plan-card"><button class="close" id="closePlan">×</button><div class="year" id="planYear"></div><h2 id="planTitle"></h2><div class="comment" id="planComment"></div><div class="edit-actions"><button class="btn" id="planNotesBtn">📝 Заметки</button><button class="btn" id="planEdit">Изменить</button><button class="btn danger" id="planDelete">Удалить</button></div></div>
+<div id="routePanel" class="route-panel"><b id="routeName"></b><span id="routeCount"></span></div>
+<div id="statsModal" class="pop"><button class="close" onclick="closePops()">×</button><h3 style="font-family:'Cormorant Garamond';font-size:28px;font-weight:500;margin:0 0 14px">Статистика</h3><div class="stats-grid" id="statsGrid"></div></div>
+<div id="backupModal" class="pop"><button class="close" onclick="closePops()">×</button><h3 style="font-family:'Cormorant Garamond';font-size:28px;font-weight:500;margin:0 0 8px">Архив</h3><p style="font-size:11px;line-height:1.6;color:var(--muted)">Сохрани копию данных карты или восстанови ранее сохранённый архив.</p><button class="btn primary" id="exportBtn" style="width:100%">↓ Скачать архив</button><label style="text-align:center;background:var(--soft);border-radius:12px;padding:11px;cursor:pointer">↑ Восстановить архив<input id="importFile" type="file" accept=".json" style="display:none"></label></div>
+
+<div id="authModal" class="editor">
+  <div class="form" style="max-width:420px">
+    <h2 id="authTitle">LA NOSTRA MAPPA</h2>
+    <div class="subtle" style="margin-bottom:18px">Вход для A + L</div>
+    <label>Email</label>
+    <input id="authEmail" type="email" autocomplete="email" placeholder="Ваш email">
+    <label>Пароль</label>
+    <input id="authPassword" type="password" autocomplete="current-password" placeholder="Пароль">
+    <div id="authError" class="hint" style="color:#8d5147;min-height:18px"></div>
+    <div class="form-actions">
+      <button class="btn" id="authCancel">Отмена</button>
+      <button class="btn primary" id="authLogin">Войти</button>
+    </div>
+  </div>
+</div>
+
+<div id="editor" class="editor"><div class="form"><h2 id="formTitle">Новое воспоминание</h2><label>Тип точки</label><select id="fType"><option value="memory">Воспоминание</option><option value="plan">Планируемое место</option></select><div class="row"><div><label>Название</label><input id="fTitle" placeholder="Например: Наш первый вечер"></div><div><label>Дата</label><input id="fDate" type="date"></div></div><label>Категория</label><input id="fCategory" placeholder="Например: Путешествие, Море, Наше место"><label>Описание / комментарий</label><textarea id="fCaption" placeholder="Несколько строк о событии..."></textarea><div id="photoField"><label>Фотографии</label><input id="fPhotos" type="file" accept="image/*" multiple><div class="photos-list" id="photosList"></div></div><label>Символ избранного</label><div class="emoji-list" id="emojiList"></div><label>Маршрут</label><input id="fRoute" placeholder="Например: Первое большое путешествие"><div class="hint">Точки с одинаковым названием маршрута можно соединить линией. В карточке точки появится кнопка «Показать путь».</div><div class="form-actions"><button class="btn" id="cancelBtn">Отмена</button><button class="btn primary" id="saveBtn">Сохранить</button></div></div></div>
+<div id="lightbox" class="lightbox"><button class="close" id="closeLightbox">×</button><button class="arrow left" id="lbPrev">‹</button><img id="lbImg"><button class="arrow right" id="lbNext">›</button></div>
+<div id="passwordModal" class="modal">
+  <div class="modal-card" style="max-width:430px">
+    <button class="close" id="passwordClose">×</button>
+    <h2>Изменить пароль</h2>
+    <div class="subtle" style="margin-bottom:16px">Новый пароль</div>
+    <input id="newPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Минимум 6 символов">
+    <input id="newPassword2" type="password" autocomplete="new-password" minlength="6" placeholder="Повторите пароль" style="margin-top:9px">
+    <div id="passwordMsg" class="hint" style="min-height:20px;margin-top:8px"></div>
+    <div class="form-actions">
+      <button class="btn" id="passwordCancel">Отмена</button>
+      <button class="btn primary" id="passwordSave">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+
+window.addEventListener('error', e => {
+  console.error('LA NOSTRA MAPPA error:', e.error || e.message);
+  setTimeout(() => $('splash')?.classList.add('hide'), 1800);
+});
+
+const SUPABASE_URL='https://brdfbdgsusaapawacxjz.supabase.co';
+const SUPABASE_KEY='sb_publishable_ItjX_6gCYoxSMHqKqREZEg_hDiGZDj4';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const START=new Date('2024-09-01T00:00:00');
+const FAVS=['','✈','♡','☆','☾','☀','☕','♫','❄','🍴'];
+let memories=[],map,markers={},markerLayer=null,selectedId=null,editingId=null,selectedCoords=null;
+let pendingPhotos=[],photoIndex=0,timeOn=false,routeLayer=null,currentUser=null;
+
+const $=id=>document.getElementById(id);
+function fmt(d){if(!d)return'';let[y,m,day]=d.split('-');return`${day}.${m}.${y}`}
+function days(){return Math.max(0,Math.floor((Date.now()-START)/86400000))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function icon(m){return L.divIcon({className:'',html:`<div class="marker ${m.type==='plan'?'plan':''}">${m.favorite?`<span class="fav">${m.favorite}</span>`:''}</div>`,iconSize:[18,18],iconAnchor:[9,9]})}
+
+function closePops(){document.querySelectorAll('.pop').forEach(x=>x.classList.remove('open'))}
+function updateStats(){
+  $('countTop').textContent=memories.filter(m=>m.type!=='plan').length;
+  $('daysTop').textContent=days();
+}
+
+function memoryDates(){
+  return memories.filter(m=>m.type!=='plan' && m.date).map(m=>m.date).sort();
+}
+function monthKey(dateStr){
+  return String(dateStr).slice(0,7);
+}
+function monthLabel(key){
+  const [y,mo]=key.split('-').map(Number);
+  const names=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  return `${names[mo-1]} ${y}`;
+}
+function updateTimeline(){
+  const dates=memoryDates();
+  const ticks=$('ticks');
+  if(!dates.length){
+    ticks.innerHTML='<span>Нет воспоминаний</span><span>—</span>';
+    $('rangeMin').value=0;$('rangeMax').value=100;
+    return;
+  }
+  const first=monthKey(dates[0]),last=monthKey(dates[dates.length-1]);
+  const [fy,fm]=first.split('-').map(Number),[ly,lm]=last.split('-').map(Number);
+  const start=fy*12+(fm-1),end=ly*12+(lm-1);
+  const months=Math.max(1,end-start+1);
+
+  // Keep the two range controls normalized to 0..100, while displaying
+  // every month between the earliest and latest memory.
+  const labels=[];
+  const maxTicks=13;
+  const step=Math.max(1,Math.ceil(months/maxTicks));
+  for(let i=0;i<months;i+=step){
+    const total=start+i, y=Math.floor(total/12), mo=total%12+1;
+    labels.push(`${String(y).padStart(4,'0')}-${String(mo).padStart(2,'0')}`);
+  }
+  if(labels[labels.length-1]!==last) labels.push(last);
+  ticks.innerHTML=labels.map(k=>`<span>${monthLabel(k)}</span>`).join('');
+
+  $('rangeMin').value=0;$('rangeMax').value=100;
+}
+
+function pct(d){
+  let ds=memories.filter(m=>m.date).map(m=>m.date).sort();
+  if(!ds.length)return 50;
+  let a=+new Date(ds[0]),b=+new Date(ds.at(-1)),x=+new Date(d);
+  return a===b?50:(x-a)/(b-a)*100;
+}
+function isEditor(){return !!currentUser}
+function requireAuth(){
+  if(isEditor())return true;
+  $('authError').textContent='Для редактирования нужно войти.';
+  $('authModal').classList.add('open');
+  return false;
+}
+
+async function loadData(){
+  const [{data:ms,error:me},{data:cs,error:ce},{data:rs,error:re}]=await Promise.all([
+    sb.from('memories').select('*').order('event_date',{ascending:true,nullsFirst:false}),
+    sb.from('categories').select('*').order('name'),
+    sb.from('routes').select('*').order('name')
+  ]);
+  if(me)throw me;if(ce)throw ce;if(re)throw re;
+
+  const memoryIds=(ms||[]).map(x=>x.id);
+  let photos=[],notes=[];
+  if(memoryIds.length){
+    const [{data:ps,error:pe},{data:ns,error:ne}]=await Promise.all([
+      sb.from('photos').select('*').in('memory_id',memoryIds).order('sort_order'),
+      sb.from('notes').select('*').in('memory_id',memoryIds).order('created_at')
+    ]);
+    if(pe)throw pe;if(ne)throw ne;photos=ps||[];notes=ns||[];
+  }
+  const catMap=Object.fromEntries((cs||[]).map(x=>[x.id,x.name]));
+  const routeMap=Object.fromEntries((rs||[]).map(x=>[x.id,x.name]));
+  memories=(ms||[]).map(m=>({
+    id:m.id,type:m.type,title:m.title,date:m.event_date||'',
+    category:catMap[m.category_id]||'',category_id:m.category_id||null,
+    caption:m.description||'',route:routeMap[m.route_id]||'',route_id:m.route_id||null,
+    favorite:m.favorite||'',coords:[m.latitude,m.longitude],
+    photos:(photos.filter(p=>p.memory_id===m.id).sort((a,b)=>a.sort_order-b.sort_order)
+      .map(p=>publicPhotoUrl(p.storage_path))),
+    photoRows:photos.filter(p=>p.memory_id===m.id),
+    notes:notes.filter(n=>n.memory_id===m.id).map(n=>({
+      id:n.id,text:n.text,author:n.author||'A + L',
+      date:n.created_at?fmt(new Date(n.created_at).toISOString().slice(0,10)):''
+    }))
+  }));
+  updateTimeline();
+  render();
+}
+
+function publicPhotoUrl(path){
+  return sb.storage.from('memory-photos').getPublicUrl(path).data.publicUrl;
+}
+
+function render(){
+  if(!markerLayer) markerLayer=L.layerGroup().addTo(map);
+  markerLayer.clearLayers();
+  markers={};
+  const q=String($('search').value||'').toLowerCase().trim();
+  const lo=+$('rangeMin').value, hi=+$('rangeMax').value;
+
+  memories.forEach(m=>{
+    if(!Array.isArray(m.coords) || m.coords.length!==2 || !Number.isFinite(+m.coords[0]) || !Number.isFinite(+m.coords[1])) return;
+    let ok=!q||[m.title,m.caption,m.category,m.route].join(' ').toLowerCase().includes(q);
+    if(timeOn && m.date) ok=ok && pct(m.date)>=lo && pct(m.date)<=hi;
+    if(!ok) return;
+
+    const mk=L.marker([+m.coords[0],+m.coords[1]],{icon:icon(m),keyboard:true});
+    mk.on('click',e=>{
+      if(e && e.originalEvent) L.DomEvent.stopPropagation(e);
+      openMemory(m.id);
+    });
+    mk.addTo(markerLayer);
+    markers[m.id]=mk;
+  });
+  updateStats();
+} 
+
+function openMemory(id){
+  selectedId=id;photoIndex=0;
+  let m=memories.find(x=>x.id===id);if(!m)return;
+  if(m.type==='plan'){
+    $('sidepanel').classList.remove('open');$('notes').classList.remove('open');
+    $('planYear').textContent=m.date?m.date.slice(0,4):'Год не указан';
+    $('planTitle').textContent=m.title||'Без названия';
+    $('planComment').textContent=m.caption||'';
+    $('planCard').classList.add('open');return;
+  }
+  $('planCard').classList.remove('open');
+  $('viewDate').textContent=fmt(m.date);$('viewTitle').textContent=m.title||'Без названия';
+  $('viewCaption').textContent=m.caption||'';
+  $('viewMeta').innerHTML=[m.category].filter(Boolean).map(x=>`<span class="tag">${esc(x)}</span>`).join('');
+  drawPhoto(m);$('sidepanel').classList.add('open');$('notes').classList.remove('open');
+  let rs=routeMembers(m);$('routeBtn').style.display=rs.length>1?'inline-block':'none';
+}
+function drawPhoto(m){
+  let w=$('photoWrap'),p=m.photos||[];
+  if(!p.length){w.innerHTML='<div class="photo-empty">Фотографий пока нет</div>';return}
+  w.innerHTML=`<img src="${p[photoIndex]}"><button class="arrow left" ${p.length<2?'style="display:none"':''}>‹</button><button class="arrow right" ${p.length<2?'style="display:none"':''}>›</button><div class="counter">${photoIndex+1} / ${p.length}</div><button class="expand">⤢</button>`;
+  w.querySelector('.left').onclick=()=>{photoIndex=(photoIndex-1+p.length)%p.length;drawPhoto(m)};
+  w.querySelector('.right').onclick=()=>{photoIndex=(photoIndex+1)%p.length;drawPhoto(m)};
+  w.querySelector('.expand').onclick=()=>openLB(m);w.querySelector('img').onclick=()=>openLB(m);
+}
+function openLB(m){
+  $('lightbox').classList.add('open');$('lbImg').src=m.photos[photoIndex];
+  $('lbPrev').onclick=()=>{photoIndex=(photoIndex-1+m.photos.length)%m.photos.length;$('lbImg').src=m.photos[photoIndex]};
+  $('lbNext').onclick=()=>{photoIndex=(photoIndex+1)%m.photos.length;$('lbImg').src=m.photos[photoIndex]};
+}
+function routeMembers(m){return m.route?memories.filter(x=>x.route===m.route&&x.coords):[]}
+function showRoute(){
+  let m=memories.find(x=>x.id===selectedId),arr=routeMembers(m).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(arr.length<2)return;
+  if(routeLayer)map.removeLayer(routeLayer);
+  routeLayer=L.polyline(arr.map(x=>x.coords),{className:'route-line'}).addTo(map);
+  $('routeName').textContent=m.route;$('routeCount').textContent=arr.length+' точки маршрута';
+  $('routePanel').classList.add('open');map.fitBounds(routeLayer.getBounds(),{padding:[100,100]});
+}
+
+async function getOrCreateByName(table,name){
+  if(!name)return null;
+  const {data,error}=await sb.from(table).select('id').eq('name',name).maybeSingle();
+  if(error)throw error;if(data)return data.id;
+  const {data:created,error:ce}=await sb.from(table).insert({name}).select('id').single();
+  if(ce)throw ce;return created.id;
+}
+
+function openEditor(id){
+  if(!requireAuth())return;
+  editingId=id;let m=id?memories.find(x=>x.id===id):null;
+  $('formTitle').textContent=m?'Редактировать':'Новое воспоминание';
+  $('fType').value=m?.type||'memory';$('fTitle').value=m?.title||'';
+  $('fDate').value=m?.date||new Date().toISOString().slice(0,10);
+  $('fCategory').value=m?.category||'';$('fCaption').value=m?.caption||'';
+  $('fRoute').value=m?.route||'';pendingPhotos=[...(m?.photos||[])];
+  renderPhotos();buildFavs(m?.favorite||'');togglePhotos();$('editor').classList.add('open');
+}
+function buildFavs(s){
+  $('emojiList').innerHTML='';
+  FAVS.forEach(x=>{let b=document.createElement('button');b.type='button';b.className='emoji-option '+(x===s?'selected':'');b.textContent=x||'—';
+    b.onclick=()=>{document.querySelectorAll('.emoji-option').forEach(y=>y.classList.remove('selected'));b.classList.add('selected')};
+    $('emojiList').appendChild(b)});
+}
+function fav(){let a=[...document.querySelectorAll('.emoji-option')],i=a.findIndex(x=>x.classList.contains('selected'));return FAVS[i]||''}
+function togglePhotos(){$('photoField').style.display=$('fType').value==='plan'?'none':'block'}
+function renderPhotos(){
+  $('photosList').innerHTML='';
+  pendingPhotos.forEach((p,i)=>{let d=document.createElement('div');d.className='thumb';d.innerHTML=`<img src="${p}"><button>×</button>`;
+    d.querySelector('button').onclick=()=>{pendingPhotos.splice(i,1);renderPhotos()};$('photosList').appendChild(d)});
+}
+function dataURL(f){return new Promise((res,rej)=>{let r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})}
+
+function openNotes(){
+  let m=memories.find(x=>x.id===selectedId);if(!m)return;
+  $('notesList').innerHTML='';
+  let ns=m.notes||[];
+  if(!ns.length)$('notesList').innerHTML='<div style="font-size:11px;color:#8b7d6c">Здесь пока пусто. Оставьте первую заметку.</div>';
+  ns.forEach(n=>{let d=document.createElement('div');d.className='note';d.innerHTML=esc(n.text)+`<small>${esc(n.author||'A + L')} · ${esc(n.date||'')}</small>`;$('notesList').appendChild(d)});
+  $('notes').classList.add('open');if(m.type==='plan')$('planCard').classList.remove('open');
+}
+
+async function saveMemory(){
+  if(!requireAuth())return;
+  let title=$('fTitle').value.trim();if(!title)return alert('Добавь название');
+  let old=editingId?memories.find(x=>x.id===editingId):null,type=$('fType').value;
+  let coords=old?.coords||selectedCoords;if(!coords)return alert('Сначала выбери место на карте');
+  try{
+    const category_id=await getOrCreateByName('categories',$('fCategory').value.trim());
+    const route_id=await getOrCreateByName('routes',$('fRoute').value.trim());
+    const payload={
+      type,title,event_date:$('fDate').value||null,description:$('fCaption').value.trim(),
+      latitude:coords[0],longitude:coords[1],category_id,route_id,favorite:fav()
+    };
+    let row;
+    if(editingId){
+      const {data,error}=await sb.from('memories').update(payload).eq('id',editingId).select().single();
+      if(error)throw error;row=data;
+    }else{
+      const {data,error}=await sb.from('memories').insert(payload).select().single();
+      if(error)throw error;row=data;
+    }
+
+    if(type==='memory'){
+      const oldRows=old?.photoRows||[];
+      const kept=new Set();
+      for(let i=0;i<pendingPhotos.length;i++){
+        const val=pendingPhotos[i];
+        const existing=oldRows.find(r=>publicPhotoUrl(r.storage_path)===val);
+        if(existing){kept.add(existing.id);continue}
+        if(val.startsWith('data:')){
+          const blob=await fetch(val).then(r=>r.blob());
+          const ext=(blob.type.split('/')[1]||'jpg').replace('jpeg','jpg');
+          const path=`${row.id}/${crypto.randomUUID()}.${ext}`;
+          const {error:ue}=await sb.storage.from('memory-photos').upload(path,blob,{contentType:blob.type,upsert:false});
+          if(ue)throw ue;
+          const {error:pe}=await sb.from('photos').insert({memory_id:row.id,storage_path:path,sort_order:i});
+          if(pe)throw pe;
+        }
+      }
+      for(const r of oldRows){if(!kept.has(r.id) && !pendingPhotos.some(x=>publicPhotoUrl(r.storage_path)===x)){
+        await sb.storage.from('memory-photos').remove([r.storage_path]);
+        await sb.from('photos').delete().eq('id',r.id);
+      }}
+    }else if(old?.photoRows?.length){
+      await Promise.all(old.photoRows.map(r=>sb.storage.from('memory-photos').remove([r.storage_path])));
+      await sb.from('photos').delete().eq('memory_id',row.id);
+    }
+
+    $('editor').classList.remove('open');await loadData();openMemory(row.id);
+  }catch(e){console.error(e);alert('Не удалось сохранить. Проверь подключение Supabase и права RLS.')}
+}
+
+async function deleteMemory(){
+  if(!requireAuth())return;
+  if(!confirm('Удалить это воспоминание?'))return;
+  try{
+    const m=memories.find(x=>x.id===selectedId);
+    if(m?.photoRows?.length)await sb.storage.from('memory-photos').remove(m.photoRows.map(x=>x.storage_path));
+    const {error}=await sb.from('memories').delete().eq('id',selectedId);if(error)throw error;
+    selectedId=null;$('sidepanel').classList.remove('open');$('planCard').classList.remove('open');await loadData();
+  }catch(e){console.error(e);alert('Не удалось удалить точку.')}
+}
+
+async function addNote(){
+  if(!requireAuth())return;
+  let t=$('noteText').value.trim();if(!t)return;
+  try{
+    const {error}=await sb.from('notes').insert({memory_id:selectedId,text:t,author:'A + L'});if(error)throw error;
+    $('noteText').value='';await loadData();openNotes();
+  }catch(e){console.error(e);alert('Не удалось добавить заметку.')}
+}
+
+$('addBtn').onclick=()=>{
+  if(!requireAuth())return;
+  selectedCoords=null;
+  let hint=document.createElement('div');hint.textContent='Кликни по карте, чтобы поставить точку';
+  hint.style.cssText='position:absolute;z-index:1600;left:50%;top:24px;transform:translateX(-50%);background:#75604e;color:#fffaf2;border-radius:14px;padding:11px 16px;font-size:12px;box-shadow:0 8px 25px rgba(72,57,42,.2)';
+  document.body.appendChild(hint);
+  let fn=e=>{selectedCoords=[e.latlng.lat,e.latlng.lng];map.off('click',fn);hint.remove();openEditor(null)};
+  map.on('click',fn);setTimeout(()=>{map.off('click',fn);hint.remove()},10000);
+};
+
+$('closePanel').onclick=()=>$('sidepanel').classList.remove('open');
+$('closePlan').onclick=()=>{$('planCard').classList.remove('open');selectedId=null};
+$('editBtn').onclick=()=>{if(!requireAuth())return;$('sidepanel').classList.remove('open');openEditor(selectedId)};
+$('deleteBtn').onclick=deleteMemory;
+$('notesBtn').onclick=openNotes;
+if($('planNotesBtn'))$('planNotesBtn').onclick=openNotes;
+$('closeNotes').onclick=()=>$('notes').classList.remove('open');
+$('addNote').onclick=addNote;
+$('planEdit').onclick=()=>{if(!requireAuth())return;$('planCard').classList.remove('open');openEditor(selectedId)};
+$('planDelete').onclick=deleteMemory;
+
+$('routeBtn').onclick=showRoute;
+$('statsBtn').onclick=()=>{closePops();let mem=memories.filter(m=>m.type!=='plan'),pl=memories.filter(m=>m.type==='plan'),ca=new Set(memories.map(m=>m.category).filter(Boolean)),ro=new Set(memories.map(m=>m.route).filter(Boolean));
+  $('statsGrid').innerHTML=`<div class="stat"><strong>${mem.length}</strong><span>ВОСПОМИНАНИЙ</span></div><div class="stat"><strong>${pl.length}</strong><span>ПЛАНОВ</span></div><div class="stat"><strong>${ca.size}</strong><span>КАТЕГОРИЙ</span></div><div class="stat"><strong>${ro.size}</strong><span>МАРШРУТОВ</span></div>`;$('statsModal').classList.add('open')};
+$('backupBtn').onclick=async()=>{closePops();$('backupModal').classList.add('open')};
+$('exportBtn').onclick=()=>{let b=new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),memories},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='la_nostra_mappa_backup.json';a.click()};
+$('search').oninput=render;$('clearSearch').onclick=()=>{$('search').value='';render()};
+$('timeSwitch').onclick=()=>{timeOn=!timeOn;$('timeSwitch').classList.toggle('on',timeOn);render()};
+$('resetTime').onclick=()=>{$('rangeMin').value=0;$('rangeMax').value=100;render()};
+$('rangeMin').oninput=render;$('rangeMax').oninput=render;$('fType').onchange=togglePhotos;
+$('cancelBtn').onclick=()=>$('editor').classList.remove('open');
+$('fPhotos').onchange=async e=>{for(let f of e.target.files)pendingPhotos.push(await dataURL(f));renderPhotos();e.target.value=''};
+
+$('saveBtn').onclick=saveMemory;
+$('closeLightbox').onclick=()=>$('lightbox').classList.remove('open');
+$('lightbox').onclick=e=>{if(e.target.id==='lightbox')e.currentTarget.classList.remove('open')};
+
+$('authBtn').onclick=async()=>{
+  if(currentUser){openPasswordModal();return;}
+  $('authError').textContent='';$('authEmail').value='';$('authPassword').value='';$('authModal').classList.add('open');
+};
+if($('passwordClose'))$('passwordClose').onclick=()=>$('passwordModal').classList.remove('open');
+if($('passwordCancel'))$('passwordCancel').onclick=()=>$('passwordModal').classList.remove('open');
+if($('passwordSave'))$('passwordSave').onclick=saveNewPassword;
+$('authCancel').onclick=()=>$('authModal').classList.remove('open');
+$('authLogin').onclick=async()=>{
+  $('authError').textContent='';
+  const email=$('authEmail').value.trim(),password=$('authPassword').value;
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){$('authError').textContent='Неверный email или пароль.';return}
+  currentUser=data.user;$('authModal').classList.remove('open');updateAuthUI();
+};
+
+function openPasswordModal(){
+  $('newPassword').value='';$('newPassword2').value='';$('passwordMsg').textContent='';
+  $('passwordModal').classList.add('open');
+  setTimeout(()=>$('newPassword').focus(),50);
+}
+async function saveNewPassword(){
+  const p=$('newPassword').value,p2=$('newPassword2').value;
+  $('passwordMsg').textContent='';
+  if(p.length<6){$('passwordMsg').textContent='Минимум 6 символов.';return;}
+  if(p!==p2){$('passwordMsg').textContent='Пароли не совпадают.';return;}
+  $('passwordSave').disabled=true;
+  const {error}=await sb.auth.updateUser({password:p});
+  $('passwordSave').disabled=false;
+  if(error){$('passwordMsg').textContent=error.message||'Не удалось изменить пароль.';return;}
+  $('passwordMsg').textContent='Пароль успешно изменён.';
+  setTimeout(()=>$('passwordModal').classList.remove('open'),900);
+}
+
+function updateAuthUI(){
+  if(currentUser){
+    $('authBtn').textContent='Аккаунт';
+    let existing=$('authUser');
+    if(!existing){
+      existing=document.createElement('span');
+      existing.id='authUser';
+      existing.className='auth-user';
+      $('authBtn').before(existing);
+    }
+    existing.textContent=currentUser.email||'A + L';
+  }else{
+    $('authBtn').textContent='Войти';
+    $('authUser')?.remove();
+  }
+}
+$('importFile').onchange=()=>alert('Резервный JSON из локальной версии пока не импортируется напрямую в облако. Сделаем мигратор отдельным шагом.');
+function init(){
+  map=L.map('map',{zoomControl:false}).setView([59.9386,30.3141],12);
+  L.control.zoom({position:'bottomright'}).addTo(map); markerLayer=L.layerGroup().addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  updateTimeline();
+  setTimeout(()=>$('splash').classList.add('hide'),1400);
+}
+(async()=>{
+  init();
+  const {data}=await sb.auth.getSession();
+  currentUser=data.session?.user||null;updateAuthUI();
+  try{await loadData()}catch(e){console.error(e);alert('Не удалось загрузить данные из Supabase. Проверь Project URL, ключ и RLS.')}
+  sb.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;updateAuthUI();if(_event==='PASSWORD_RECOVERY')setTimeout(openPasswordModal,250);});
+})();
+
+</script>
+
+</body></html>
